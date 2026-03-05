@@ -20,17 +20,11 @@ const userSchema = new mongoose.Schema(
         },
         chosenNiche: {
             type: String,
-            required: true,
             trim: true,
             lowercase: true
         },
         techStack: {
-            type: [String],
-            required: true,
-            validate: [
-                (val) => val.length > 0,
-                "User must select at least one technology"
-            ]
+            type: [String]
         },
         progress: {
             niche: { type: Number, default: 1 },
