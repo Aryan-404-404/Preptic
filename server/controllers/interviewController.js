@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import InterviewSession from "../models/InterviewSession.js";
 import User from "../models/User.js";
 import { generateQuestion, evaluateAnswer } from "../services/aiService.js";
+import { transcribeAudio } from "../services/whisperService.js";
 
 const isBlank = (str) => !str || str.trim().length === 0;
 const VALID_TRACKS = ["niche", "behavioral", "combo"];
@@ -78,7 +79,19 @@ const startInterview = asyncHandler(async (req, res) => {
   SUBMIT ANSWER
 */
 const submitAnswer = asyncHandler(async (req, res) => {
-  const { sessionId, answer } = req.body;
+  console.log("BODY:", req.body);
+  console.log("FILE:", req.file);
+  console.log("MIMETYPE:", req.file?.mimetype);
+  const { sessionId } = req.body;
+  let answer = req.body.answer;
+  if (req.file) {
+    try {
+      answer = await transcribeAudio(req.file.buffer, req.file.mimetype);
+    } catch (err) {
+      res.status(502);
+      throw new Error(`Transcription failed: ${err.message}`);
+    }
+  }
 
   // empty answer guard
   if (isBlank(answer)) {
