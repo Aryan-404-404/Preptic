@@ -7,7 +7,10 @@ const ALLOWED_NICHES = [
     "backend",
     "fullstack",
     "datascience",
-    "devops"
+    "devops",
+    "ml",
+    "genai",
+    "ai"
 ];
 
 const generateToken = (id) => {
