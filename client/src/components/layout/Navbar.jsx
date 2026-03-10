@@ -3,21 +3,21 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from '../../contexts/RouterContext';
 
 export const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const { path, navigate } = useRouter();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#FFFDF7]/90 backdrop-blur-md border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <div 
-          className="flex items-center gap-2 cursor-pointer group" 
-          onClick={() => navigate(user ? '/dashboard' : '/')}
+        <div
+          className="flex items-center gap-2 cursor-pointer group"
+          onClick={() => navigate('/')}
         >
           <span className="text-xl font-bold tracking-tight text-gray-900">Preptic<span className="text-orange-500">.ai</span></span>
         </div>
 
         <div className="flex items-center gap-6">
-          {user ? (
+          {isAuthenticated ? (
             <>
               <button onClick={() => navigate('/dashboard')} className={`text-sm font-medium transition-colors ${path === '/dashboard' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}>Dashboard</button>
               <button onClick={() => navigate('/profile')} className={`text-sm font-medium transition-colors ${path === '/profile' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}>Profile</button>
@@ -29,7 +29,7 @@ export const Navbar = () => {
                   </div>
                   <span className="hidden md:inline-block">{user.name}</span>
                 </div>
-                <button onClick={() => { logout(); navigate('/'); }} className="text-sm text-gray-500 hover:text-red-500 transition-colors">
+                <button onClick={() => { logout(); setTimeout(() => navigate('/'), 100); }} className="text-sm text-gray-500 hover:text-red-500 transition-colors">
                   Logout
                 </button>
               </div>

@@ -1,31 +1,60 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Code, Brain, Settings, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, Code, Brain, Settings, CheckCircle2, Zap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from '../contexts/RouterContext';
 
 export const Signup = () => {
-    const { signup } = useAuth();
+    const { signup, updateProfile } = useAuth();
     const { navigate } = useRouter();
     const [step, setStep] = useState(1);
-    const [formData, setFormData] = useState({ name: '', email: '', password: '', niche: '' });
+    const [formData, setFormData] = useState({ name: '', email: '', password: '', chosenNiche: '' });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const niches = [
-        { id: 'Frontend Developer', icon: <LayoutDashboard className="w-5 h-5" />, desc: 'React, Vue, UI/UX', color: 'bg-teal-50 text-teal-700' },
-        { id: 'Backend Developer', icon: <Code className="w-5 h-5" />, desc: 'Node, Python, Databases', color: 'bg-amber-50 text-amber-700' },
-        { id: 'Data Scientist', icon: <Brain className="w-5 h-5" />, desc: 'ML, Pandas, Statistics', color: 'bg-blue-50 text-blue-700' },
-        { id: 'DevOps Engineer', icon: <Settings className="w-5 h-5" />, desc: 'AWS, Docker, CI/CD', color: 'bg-purple-50 text-purple-700' }
+        { id: 'frontend', label: 'Frontend Developer', icon: <LayoutDashboard className="w-5 h-5" />, desc: 'React, Vue, UI/UX', color: 'bg-teal-50 text-teal-700' },
+        { id: 'backend', label: 'Backend Developer', icon: <Code className="w-5 h-5" />, desc: 'Node, Python, Databases', color: 'bg-amber-50 text-amber-700' },
+        { id: 'fullstack', label: 'Full Stack Developer', icon: <Zap className="w-5 h-5" />, desc: 'MERN, Next.js, Full Stacks', color: 'bg-purple-50 text-purple-700' },
+        { id: 'devops', label: 'DevOps Engineer', icon: <Settings className="w-5 h-5" />, desc: 'AWS, Docker, CI/CD', color: 'bg-blue-50 text-blue-700' },
+        { id: 'datascience', label: 'Data Scientist', icon: <Brain className="w-5 h-5" />, desc: 'ML, Pandas, Statistics', color: 'bg-emerald-50 text-emerald-700' },
+        { id: 'ml', label: 'ML Engineer', icon: <Brain className="w-5 h-5" />, desc: 'PyTorch, ML Ops, Models', color: 'bg-indigo-50 text-indigo-700' },
+        { id: 'genai', label: 'Gen AI Engineer', icon: <Zap className="w-5 h-5" />, desc: 'LLMs, RAG, Prompt Eng', color: 'bg-pink-50 text-pink-700' },
+        { id: 'ai', label: 'AI Engineering', icon: <Brain className="w-5 h-5" />, desc: 'AI Architecture, ML Systems', color: 'bg-orange-50 text-orange-700' }
     ];
 
-    const handleNext = (e) => {
+    const handleNext = async (e) => {
         e.preventDefault();
-        if (step === 1) setStep(2);
+        setError('');
+        setLoading(true);
+
+        try {
+            await signup({
+                name: formData.name,
+                email: formData.email,
+                password: formData.password,
+            });
+            setStep(2);
+        } catch (err) {
+            setError(err.message || 'Signup failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleComplete = async () => {
-        if (!formData.niche) return;
-        await signup(formData);
-        navigate('/dashboard');
+        if (!formData.chosenNiche) return;
+        setLoading(true);
+        setError('');
+
+        try {
+            await updateProfile({ chosenNiche: formData.chosenNiche });
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.message || 'Failed to update profile. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -47,6 +76,12 @@ export const Signup = () => {
                         <button onClick={() => setStep(1)} className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Back</button>
                     )}
                 </div>
+
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        {error}
+                    </div>
+                )}
 
                 <AnimatePresence mode="wait">
                     {step === 1 && (
@@ -84,8 +119,8 @@ export const Signup = () => {
                                     placeholder="Min 8 Characters"
                                 />
                             </div>
-                            <button type="submit" className="w-full py-3.5 mt-2 rounded-xl bg-black text-white font-bold text-sm hover:bg-gray-800 transition-colors">
-                                SIGN UP
+                            <button type="submit" disabled={loading} className="w-full py-3.5 mt-2 rounded-xl bg-black text-white font-bold text-sm hover:bg-gray-800 transition-colors disabled:opacity-70">
+                                {loading ? 'CREATING ACCOUNT...' : 'SIGN UP'}
                             </button>
                             <p className="text-left mt-4 text-gray-600 text-sm">
                                 Already an account? <button type="button" onClick={() => navigate('/login')} className="text-orange-500 font-medium hover:text-orange-600 underline decoration-orange-500/30 underline-offset-4">Login</button>
@@ -102,20 +137,20 @@ export const Signup = () => {
                                 {niches.map((niche) => (
                                     <button
                                         key={niche.id}
-                                        onClick={() => setFormData({ ...formData, niche: niche.id })}
-                                        className={`p-5 rounded-2xl border text-left transition-all relative ${formData.niche === niche.id
-                                                ? 'bg-orange-50/50 border-orange-400 shadow-sm shadow-orange-100'
-                                                : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                                        onClick={() => setFormData({ ...formData, chosenNiche: niche.id })}
+                                        className={`p-5 rounded-2xl border text-left transition-all relative ${formData.chosenNiche === niche.id
+                                            ? 'bg-orange-50/50 border-orange-400 shadow-sm shadow-orange-100'
+                                            : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
                                             }`}
                                     >
                                         <div className="flex items-center gap-3 mb-2">
                                             <div className={`p-2 rounded-lg ${niche.color}`}>
                                                 {niche.icon}
                                             </div>
-                                            <h3 className="font-bold text-gray-900">{niche.id}</h3>
+                                            <h3 className="font-bold text-gray-900">{niche.label}</h3>
                                         </div>
                                         <p className="text-xs text-gray-500 mt-2">{niche.desc}</p>
-                                        {formData.niche === niche.id && (
+                                        {formData.chosenNiche === niche.id && (
                                             <div className="absolute top-4 right-4 text-orange-500">
                                                 <CheckCircle2 className="w-5 h-5" />
                                             </div>
@@ -126,10 +161,10 @@ export const Signup = () => {
                             <div className="mt-8">
                                 <button
                                     onClick={handleComplete}
-                                    disabled={!formData.niche}
+                                    disabled={!formData.chosenNiche || loading}
                                     className="w-full py-3.5 rounded-xl bg-black text-white font-bold text-sm hover:bg-gray-800 transition-all disabled:opacity-50 disabled:hover:bg-black"
                                 >
-                                    FINISH & ENTER PLATFORM
+                                    {loading ? 'COMPLETING...' : 'FINISH & ENTER PLATFORM'}
                                 </button>
                             </div>
                         </motion.div>

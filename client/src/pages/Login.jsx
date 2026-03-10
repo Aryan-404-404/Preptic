@@ -9,12 +9,20 @@ export const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        await login(email, password);
-        navigate('/dashboard');
+        setError('');
+
+        try {
+            await login(email, password);
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.message || 'Login failed. Please try again.');
+            setLoading(false);
+        }
     };
 
     return (
@@ -34,6 +42,12 @@ export const Login = () => {
                     <p className="text-gray-500 text-sm">Sign in to continue your preparation.</p>
                 </div>
 
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        {error}
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium text-gray-700">Email Address</label>
@@ -41,6 +55,7 @@ export const Login = () => {
                             type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
                             className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-gray-900 focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400 transition-all placeholder-gray-400"
                             placeholder="you@example.com"
+                            disabled={loading}
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -49,6 +64,7 @@ export const Login = () => {
                             type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
                             className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-gray-900 focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400 transition-all placeholder-gray-400"
                             placeholder="Min 8 Characters"
+                            disabled={loading}
                         />
                     </div>
 

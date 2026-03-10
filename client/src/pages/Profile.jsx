@@ -6,14 +6,40 @@ import { useAuth } from '../contexts/AuthContext';
 export const Profile = () => {
     const { user, updateProfile } = useAuth();
     const [name, setName] = useState(user?.name || '');
-    const [niche, setNiche] = useState(user?.niche || '');
+    const [chosenNiche, setChosenNiche] = useState(user?.chosenNiche || '');
     const [saved, setSaved] = useState(false);
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const niches = [
+        { value: 'frontend', label: 'Frontend Developer' },
+        { value: 'backend', label: 'Backend Developer' },
+        { value: 'fullstack', label: 'Full Stack Developer' },
+        { value: 'devops', label: 'DevOps Engineer' },
+        { value: 'datascience', label: 'Data Scientist' },
+        { value: 'ml', label: 'ML Engineer' },
+        { value: 'genai', label: 'Gen AI Engineer' },
+        { value: 'ai', label: 'AI Engineering' }
+    ];
 
     const handleSave = async (e) => {
         e.preventDefault();
-        await updateProfile({ name, niche });
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        setLoading(true);
+        setError('');
+        setSaved(false);
+
+        try {
+            await updateProfile({
+                name,
+                chosenNiche
+            });
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
+        } catch (err) {
+            setError(err.message || 'Failed to save changes. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -27,32 +53,41 @@ export const Profile = () => {
                     <p className="text-gray-500 text-sm">Update your details. Changes reflect immediately on the dashboard.</p>
                 </div>
 
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        {error}
+                    </div>
+                )}
+
                 <form onSubmit={handleSave} className="space-y-6">
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium text-gray-700">Display Name</label>
                         <input
                             type="text" value={name} onChange={(e) => setName(e.target.value)}
                             className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-gray-900 focus:outline-none focus:border-orange-400 transition-colors"
+                            disabled={loading}
                         />
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium text-gray-700">Primary Niche</label>
                         <select
-                            value={niche} onChange={(e) => setNiche(e.target.value)}
+                            value={chosenNiche} onChange={(e) => setChosenNiche(e.target.value)}
                             className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-gray-900 appearance-none focus:outline-none focus:border-orange-400 transition-colors cursor-pointer"
+                            disabled={loading}
                         >
-                            <option value="Frontend Developer">Frontend Developer</option>
-                            <option value="Backend Developer">Backend Developer</option>
-                            <option value="Data Scientist">Data Scientist</option>
-                            <option value="DevOps Engineer">DevOps Engineer</option>
+                            <option value="">Select a niche</option>
+                            {niches.map(niche => (
+                                <option key={niche.value} value={niche.value}>{niche.label}</option>
+                            ))}
                         </select>
                     </div>
 
                     <button
                         type="submit"
-                        className="w-full py-3.5 mt-2 rounded-xl bg-black text-white font-bold text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                        disabled={loading}
+                        className="w-full py-3.5 mt-2 rounded-xl bg-black text-white font-bold text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
                     >
-                        {saved ? <><CheckCircle2 className="w-5 h-5 text-green-400" /> Saved Successfully</> : 'SAVE CHANGES'}
+                        {saved ? <><CheckCircle2 className="w-5 h-5 text-green-400" /> Saved Successfully</> : loading ? 'SAVING...' : 'SAVE CHANGES'}
                     </button>
                 </form>
             </motion.div>

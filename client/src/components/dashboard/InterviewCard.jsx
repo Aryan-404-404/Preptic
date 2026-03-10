@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, ChevronRight } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Lock } from 'lucide-react';
 
-export const InterviewCard = ({ title, type, icon, stacks, bgColorClass, accentColorClass }) => {
+export const InterviewCard = ({ title, type, icon, stacks, bgColorClass, accentColorClass, isLocked = false, onCardClick = null }) => {
     const [selectedStack, setSelectedStack] = useState('');
     const [isExpanded, setIsExpanded] = useState(false);
 
     useEffect(() => {
-        if (selectedStack) setIsExpanded(true);
-    }, [selectedStack]);
+        if (selectedStack && !isLocked) setIsExpanded(true);
+    }, [selectedStack, isLocked]);
 
     const levels = [
         { id: 'easy', label: 'L1 - Screening', desc: 'Basic concepts & fundamentals', dot: 'bg-emerald-400' },
@@ -16,50 +16,73 @@ export const InterviewCard = ({ title, type, icon, stacks, bgColorClass, accentC
         { id: 'hard', label: 'L10 - Executive', desc: 'System design & high-pressure', dot: 'bg-purple-400' }
     ];
 
+    const handleCardClick = () => {
+        if (isLocked && onCardClick) {
+            onCardClick(title);
+        }
+    };
+
     return (
         <motion.div
             layout
-            className={`bg-white border border-gray-200 transition-all duration-300 rounded-2xl overflow-hidden hover:shadow-md ${isExpanded ? 'shadow-md border-gray-300' : 'shadow-sm'
-                }`}
+            onClick={handleCardClick}
+            className={`bg-white border border-gray-200 transition-all duration-300 rounded-2xl overflow-hidden ${isLocked
+                    ? 'cursor-pointer hover:shadow-md hover:border-orange-300'
+                    : 'hover:shadow-md'
+                } ${isExpanded && !isLocked ? 'shadow-md border-gray-300' : 'shadow-sm'}`}
         >
-            <div className="p-6">
+            <div className="p-6 relative">
+                {/* Lock Badge for Guests */}
+                {isLocked && (
+                    <div className="absolute top-4 right-4">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-linear-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-full shadow-sm">
+                            <Lock className="w-3.5 h-3.5 text-orange-600" />
+                            <span className="text-xs font-semibold text-orange-700">Login to Unlock</span>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex items-start gap-4 mb-6">
-                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold ${bgColorClass} ${accentColorClass}`}>
+                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold ${bgColorClass} ${accentColorClass} ${isLocked ? 'opacity-60' : ''}`}>
                         {type === 'niche' ? title.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'BH'}
                     </div>
                     <div className="flex-1">
                         <div className="flex justify-between items-start">
-                            <h3 className="text-xl font-bold text-gray-900">{title}</h3>
-                            {isExpanded && <CheckCircle2 className="w-5 h-5 text-green-500" />}
+                            <h3 className={`text-xl font-bold ${isLocked ? 'text-gray-600' : 'text-gray-900'}`}>{title}</h3>
+                            {isExpanded && !isLocked && <CheckCircle2 className="w-5 h-5 text-green-500" />}
                         </div>
-                        <p className="text-gray-500 text-sm mt-1">{type === 'niche' ? 'Technical domain assessment' : 'Mandatory soft-skills & leadership'}</p>
+                        <p className={`text-sm mt-1 ${isLocked ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {type === 'niche' ? 'Technical domain assessment' : 'Mandatory soft-skills & leadership'}
+                        </p>
 
                         {/* Tags matching screenshot style */}
                         <div className="flex gap-2 mt-4">
-                            <span className="px-3 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full">Experience: 2 Years</span>
-                            <span className="px-3 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full">10 Q&A</span>
+                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${isLocked ? 'text-gray-400 bg-gray-50 border border-gray-200' : 'text-gray-700 bg-white border border-gray-300'}`}>Experience: 2 Years</span>
+                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${isLocked ? 'text-gray-400 bg-gray-50 border border-gray-200' : 'text-gray-700 bg-white border border-gray-300'}`}>10 Q&A</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-4">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Select Focus Stack</label>
-                    <div className="relative">
-                        <select
-                            value={selectedStack}
-                            onChange={(e) => setSelectedStack(e.target.value)}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-900 text-sm appearance-none focus:outline-none focus:border-orange-400 transition-colors cursor-pointer"
-                        >
-                            <option value="" disabled>Choose your focus area...</option>
-                            {stacks.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                        <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none rotate-90" />
+                {!isLocked && (
+                    <div className="mt-4">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Select Focus Stack</label>
+                        <div className="relative">
+                            <select
+                                value={selectedStack}
+                                onChange={(e) => setSelectedStack(e.target.value)}
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-900 text-sm appearance-none focus:outline-none focus:border-orange-400 transition-colors cursor-pointer"
+                            >
+                                <option value="" disabled>Choose your focus area...</option>
+                                {stacks.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                            <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none rotate-90" />
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             <AnimatePresence>
-                {isExpanded && (
+                {isExpanded && !isLocked && (
                     <motion.div
                         initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
                         className="border-t border-gray-100 bg-gray-50/50"

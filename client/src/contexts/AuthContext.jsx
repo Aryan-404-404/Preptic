@@ -1,24 +1,36 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
 
 const AuthContext = createContext(null);
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Simulate hitting a /me or /validate endpoint on mount (HttpOnly cookie validation)
+  // Validate session and restore user from token on mount
   useEffect(() => {
     const validateSession = async () => {
       setIsLoading(true);
       try {
-        // Simulating network delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const storedSession = localStorage.getItem('mock_session');
-        if (storedSession) {
-          setUser(JSON.parse(storedSession));
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await fetch(`${API_BASE_URL}/user/profile`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+          } else {
+            localStorage.removeItem('token');
+          }
         }
       } catch (error) {
-        console.error("Session validation failed");
+        console.error("Session validation failed", error);
+        localStorage.removeItem('token');
       } finally {
         setIsLoading(false);
       }
@@ -27,33 +39,105 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    // Mock API Call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const mockUser = { name: 'John Doe', email, niche: 'Frontend Developer' };
-    setUser(mockUser);
-    localStorage.setItem('mock_session', JSON.stringify(mockUser));
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Login failed');
+      }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      setUser({
+        _id: data._id,
+        name: data.name,
+        email: data.email,
+        chosenNiche: data.chosenNiche,
+        techStack: data.techStack,
+        progress: data.progress,
+      });
+    } catch (error) {
+      console.error("Login error", error);
+      throw error;
+    }
   };
 
   const signup = async (data) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setUser(data);
-    localStorage.setItem('mock_session', JSON.stringify(data));
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Signup failed');
+      }
+
+      const userData = await response.json();
+      localStorage.setItem('token', userData.token);
+      setUser({
+        _id: userData._id,
+        name: userData.name,
+        email: userData.email,
+        chosenNiche: userData.chosenNiche,
+        techStack: userData.techStack,
+        progress: userData.progress,
+      });
+    } catch (error) {
+      console.error("Signup error", error);
+      throw error;
+    }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('mock_session');
+    localStorage.removeItem('token');
   };
 
   const updateProfile = async (updates) => {
-    await new Promise(resolve => setTimeout(resolve, 400));
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    localStorage.setItem('mock_session', JSON.stringify(updatedUser));
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/user/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Update failed');
+      }
+
+      const updatedUser = await response.json();
+      setUser(updatedUser);
+    } catch (error) {
+      console.error("Update profile error", error);
+      throw error;
+    }
   };
 
+  const isAuthenticated = user !== null;
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, isLoading, isAuthenticated, login, signup, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

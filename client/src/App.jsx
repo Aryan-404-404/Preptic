@@ -14,12 +14,15 @@ import { PublicRoute } from './routes/PublicRoute';
 const AppContent = () => {
   const { path } = useRouter();
 
+  // Extract just the path without query parameters
+  const basePath = path.split('?')[0];
+
   const renderRoute = () => {
-    switch (path) {
+    switch (basePath) {
       case '/': return <PublicRoute><Landing /></PublicRoute>;
       case '/login': return <PublicRoute><Login /></PublicRoute>;
       case '/signup': return <PublicRoute><Signup /></PublicRoute>;
-      case '/dashboard': return <ProtectedRoute><Dashboard /></ProtectedRoute>;
+      case '/dashboard': return <Dashboard />;
       case '/profile': return <ProtectedRoute><Profile /></ProtectedRoute>;
       default: return <Landing />;
     }
@@ -30,7 +33,7 @@ const AppContent = () => {
       <Navbar />
       <AnimatePresence mode="wait">
         <motion.div
-          key={path}
+          key={basePath}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
