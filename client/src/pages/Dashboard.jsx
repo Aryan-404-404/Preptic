@@ -82,6 +82,37 @@ export const Dashboard = () => {
     navigate('/login?redirect=/dashboard');
   };
 
+  const handleStartInterview = async (levelNumber, selectedStacks, trackType) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/interview/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          trackType,
+          level: levelNumber,
+          techStack: selectedStacks
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to start interview');
+      }
+
+      sessionStorage.setItem('currentInterviewData', JSON.stringify({
+        question: data.question,
+        questionNumber: data.questionNumber
+      }));
+
+      navigate(`/interview/${data.sessionId}`);
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
   // Guest teaser view - show all niches as locked cards
   if (!isAuthenticated) {
     return (
@@ -188,6 +219,7 @@ export const Dashboard = () => {
                   stacks={selectedNiche.stacks}
                   bgColorClass={selectedNiche.bgColor}
                   accentColorClass={selectedNiche.accentColor}
+                  onStartInterview={handleStartInterview}
                 />
               ) : null;
             })()
@@ -201,6 +233,7 @@ export const Dashboard = () => {
             stacks={['STAR Method General', 'Conflict Resolution Focus', 'Managerial & Leadership']}
             bgColorClass="bg-amber-50"
             accentColorClass="text-amber-800"
+            onStartInterview={handleStartInterview}
           />
         </motion.div>
 
@@ -226,6 +259,7 @@ export const Dashboard = () => {
                     stacks={niche.stacks}
                     bgColorClass={niche.bgColor}
                     accentColorClass={niche.accentColor}
+                    onStartInterview={handleStartInterview}
                   />
                 ))}
             </div>

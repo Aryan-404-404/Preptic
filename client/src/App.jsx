@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { RouterProvider, useRouter } from './contexts/RouterContext';
@@ -8,6 +8,8 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './pages/Dashboard';
 import { Profile } from './pages/Profile';
+import { Interview } from './pages/Interview';
+import { Results } from './pages/Results';
 import { ProtectedRoute } from './routes/ProtectedRoutes';
 import { PublicRoute } from './routes/PublicRoute';
 
@@ -22,10 +24,14 @@ const AppContent = () => {
       case '/': return <PublicRoute><Landing /></PublicRoute>;
       case '/login': return <PublicRoute><Login /></PublicRoute>;
       case '/signup': return <PublicRoute><Signup /></PublicRoute>;
-      case '/dashboard': return <Dashboard />;
+      case '/dashboard': return <ProtectedRoute><Dashboard /></ProtectedRoute>;
       case '/profile': return <ProtectedRoute><Profile /></ProtectedRoute>;
-      default: return <Landing />;
     }
+    
+    if (basePath.startsWith('/interview/')) return <ProtectedRoute><Interview /></ProtectedRoute>;
+    if (basePath.startsWith('/results/')) return <ProtectedRoute><Results /></ProtectedRoute>;
+    
+    return <Landing />;
   };
 
   return (
