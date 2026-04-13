@@ -11,7 +11,7 @@ const VALID_TRACKS = ["niche", "behavioral", "combo"];
   START INTERVIEW
 */
 const startInterview = asyncHandler(async (req, res) => {
-  const { trackType, level } = req.body;
+  const { trackType, level, techStack } = req.body;
 
   // trackType validation
   if (!VALID_TRACKS.includes(trackType)) {
@@ -42,12 +42,14 @@ const startInterview = asyncHandler(async (req, res) => {
     throw new Error("You have an active session. Finish it first.");
   }
 
+  const finalTechStack = techStack && techStack.length > 0 ? techStack : user.techStack;
+
   // AI error handling
   let firstQuestion;
   try {
     firstQuestion = await generateQuestion({
       niche: user.chosenNiche,
-      techStack: user.techStack,
+      techStack: finalTechStack,
       level,
       trackType,
       questionNumber: 1,
@@ -63,7 +65,7 @@ const startInterview = asyncHandler(async (req, res) => {
     trackType,
     level,
     niche: user.chosenNiche,
-    techStack: user.techStack,
+    techStack: finalTechStack,
     questions: [{ question: firstQuestion }],
     status: "in-progress",
   });
@@ -274,4 +276,16 @@ const finishInterview = asyncHandler(async (req, res) => {
   });
 });
 
-export { startInterview, submitAnswer, finishInterview };
+/*
+  GET INTERVIEW HISTORY
+*/
+const getInterviewHistory = asyncHandler(async (req, res) => {
+  const history = await InterviewSession.find({
+    user: req.user._id,
+    status: "completed",
+  }).sort({ createdAt: -1 });
+
+  res.json(history);
+});
+
+export { startInterview, submitAnswer, finishInterview, getInterviewHistory };
