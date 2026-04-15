@@ -18,7 +18,7 @@ export const Dashboard = () => {
       icon: Code,
       bgColor: 'bg-teal-50',
       accentColor: 'text-teal-800',
-      stacks: ['React + Tailwind', 'Next.js + Framer', 'Vue + Nuxt']
+      stacks: ['React', 'NextJS', 'tailwindCSS', 'Vue', 'HTML', 'CSS', 'JavaScript']
     },
     {
       id: 'backend',
@@ -26,7 +26,7 @@ export const Dashboard = () => {
       icon: Code,
       bgColor: 'bg-amber-50',
       accentColor: 'text-amber-800',
-      stacks: ['Node.js + Postgres', 'Python + Django', 'Go + Microservices']
+      stacks: ['Node', 'Express', 'Python', 'Django', 'FastAPI', 'Go', 'Java', 'SpringBoot']
     },
     {
       id: 'fullstack',
@@ -34,7 +34,7 @@ export const Dashboard = () => {
       icon: Zap,
       bgColor: 'bg-purple-50',
       accentColor: 'text-purple-800',
-      stacks: ['MERN Stack', 'Next.js Full Stack', 'Django + React']
+      stacks: ['React', 'NextJS', 'tailwindCSS', 'Vue', 'HTML', 'CSS', 'JavaScript', 'Node', 'Express', 'Python', 'Django', 'FastAPI', 'Go', 'Java', 'SpringBoot']
     },
     {
       id: 'devops',
@@ -104,7 +104,8 @@ export const Dashboard = () => {
 
       sessionStorage.setItem('currentInterviewData', JSON.stringify({
         question: data.question,
-        questionNumber: data.questionNumber
+        questionNumber: data.questionNumber,
+        level: levelNumber
       }));
 
       navigate(`/interview/${data.sessionId}`);

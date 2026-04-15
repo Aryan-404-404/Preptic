@@ -14,9 +14,9 @@ export const InterviewCard = ({ title, type, icon, stacks, bgColorClass, accentC
     }, [selectedStacks, isLocked]);
 
     const levels = [
-        { id: 'easy', label: 'L1 - Screening', desc: 'Basic concepts & fundamentals', dot: 'bg-emerald-400', levelNumber: 1 },
-        { id: 'medium', label: 'L5 - Mid Level', desc: 'Architecture & problem solving', dot: 'bg-blue-400', levelNumber: 2 },
-        { id: 'hard', label: 'L10 - Executive', desc: 'System design & high-pressure', dot: 'bg-purple-400', levelNumber: 3 }
+        { id: 'easy', label: 'Easy - Level', desc: 'Basic concepts & fundamentals', dot: 'bg-emerald-400', levelNumber: 1 },
+        { id: 'medium', label: 'Mid - Level', desc: 'Architecture & problem solving', dot: 'bg-blue-400', levelNumber: 2 },
+        { id: 'hard', label: 'High - Level', desc: 'System design & high-pressure', dot: 'bg-purple-400', levelNumber: 3 }
     ];
 
     const handleCardClick = () => {
@@ -43,8 +43,8 @@ export const InterviewCard = ({ title, type, icon, stacks, bgColorClass, accentC
         }
     };
 
-    const availableSuggestions = (stacks || []).filter(s => 
-        !selectedStacks.includes(s) && 
+    const availableSuggestions = (stacks || []).filter(s =>
+        !selectedStacks.includes(s) &&
         s.toLowerCase().includes(inputValue.toLowerCase())
     );
 
@@ -53,8 +53,8 @@ export const InterviewCard = ({ title, type, icon, stacks, bgColorClass, accentC
             layout
             onClick={handleCardClick}
             className={`bg-white border border-gray-200 transition-all duration-300 rounded-2xl ${isExpanded && !isLocked ? 'shadow-md border-gray-300' : 'shadow-sm'} ${isLocked
-                    ? 'cursor-pointer hover:shadow-md hover:border-orange-300'
-                    : 'hover:shadow-md'
+                ? 'cursor-pointer hover:shadow-md hover:border-orange-300'
+                : 'hover:shadow-md'
                 } ${showSuggestions ? 'z-50' : 'z-1'}`}
             style={{ position: 'relative' }}
         >
@@ -84,7 +84,6 @@ export const InterviewCard = ({ title, type, icon, stacks, bgColorClass, accentC
 
                         {/* Tags matching screenshot style */}
                         <div className="flex gap-2 mt-4">
-                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${isLocked ? 'text-gray-400 bg-gray-50 border border-gray-200' : 'text-gray-700 bg-white border border-gray-300'}`}>Experience: 2 Years</span>
                             <span className={`px-3 py-1 text-xs font-medium rounded-full ${isLocked ? 'text-gray-400 bg-gray-50 border border-gray-200' : 'text-gray-700 bg-white border border-gray-300'}`}>10 Q&A</span>
                         </div>
                     </div>
@@ -118,10 +117,10 @@ export const InterviewCard = ({ title, type, icon, stacks, bgColorClass, accentC
                                 onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                             />
                         </div>
-                        
+
                         <AnimatePresence>
                             {showSuggestions && availableSuggestions.length > 0 && (
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.15 }}
                                     className="absolute top-[100%] left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-30 max-h-48 overflow-y-auto"
                                 >

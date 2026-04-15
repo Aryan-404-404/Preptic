@@ -6,9 +6,10 @@ import { useRouter } from '../contexts/RouterContext';
 export const Interview = () => {
   const { path, navigate } = useRouter();
   const sessionId = path.split('/')[2];
-  
+
   const [question, setQuestion] = useState('Loading...');
   const [questionNumber, setQuestionNumber] = useState(1);
+  const [interviewLevel, setInterviewLevel] = useState(1);
   const [status, setStatus] = useState('ready'); // ready, listening, processing
   const [errorToast, setErrorToast] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -23,6 +24,7 @@ export const Interview = () => {
       const parsed = JSON.parse(data);
       setQuestion(parsed.question);
       setQuestionNumber(parsed.questionNumber);
+      if(parsed.level) setInterviewLevel(parsed.level);
     } else {
       setErrorToast("No active question found! Returning to dashboard.");
       setTimeout(() => navigate('/dashboard'), 3000);
@@ -34,16 +36,16 @@ export const Interview = () => {
     if (question && question !== 'Loading...') {
       // Cancel any ongoing speech
       window.speechSynthesis.cancel();
-      
+
       const utterance = new SpeechSynthesisUtterance(question);
-      
+
       // Try to find a good English voice
       const setVoice = () => {
         const voices = window.speechSynthesis.getVoices();
         const preferredVoice = voices.find(v => v.lang.includes('en-') && (v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Natural')));
         if (preferredVoice) utterance.voice = preferredVoice;
       };
-      
+
       setVoice();
       if (speechSynthesis.onvoiceschanged !== undefined) {
         speechSynthesis.onvoiceschanged = setVoice;
@@ -51,7 +53,7 @@ export const Interview = () => {
 
       utterance.rate = 0.95; // Slightly slower for a clear, interviewer-like cadence
       utterance.pitch = 1;
-      
+
       utterance.onstart = () => setIsSpeaking(true);
       // Failsafes to stop speaking indicator
       utterance.onend = () => setIsSpeaking(false);
@@ -84,7 +86,7 @@ export const Interview = () => {
 
       mediaRecorder.onstop = submitAnswer;
 
-      mediaRecorder.start(250); 
+      mediaRecorder.start(250);
       setStatus('listening');
     } catch (error) {
       setErrorToast("Can't get the microphone permissions check your settings");
@@ -156,7 +158,7 @@ export const Interview = () => {
       </AnimatePresence>
 
       <div className="w-full max-w-4xl relative z-10">
-        <motion.div 
+        <motion.div
           className="bg-gray-900/50 border border-gray-800/80 rounded-[2rem] backdrop-blur-2xl p-8 md:p-12 shadow-2xl flex flex-col items-center min-h-[500px] justify-between relative overflow-hidden ring-1 ring-white/5"
         >
           {/* Subtle grid pattern overlay purely for aesthetics */}
@@ -164,11 +166,16 @@ export const Interview = () => {
 
           {/* Header Row */}
           <div className="w-full flex justify-between items-center mb-8 relative z-10">
-            <span className="px-5 py-2 bg-gray-800/80 border border-gray-700/50 text-orange-400 rounded-full text-xs font-bold tracking-wider uppercase shadow-sm flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]"></span>
-              Question {questionNumber} / 3
-            </span>
-            
+            <div className="flex gap-3">
+              <span className="px-5 py-2 bg-gray-800/80 border border-gray-700/50 text-indigo-400 rounded-full text-xs font-bold tracking-wider uppercase shadow-sm flex items-center gap-2">
+                Level {interviewLevel}
+              </span>
+              <span className="px-5 py-2 bg-gray-800/80 border border-gray-700/50 text-orange-400 rounded-full text-xs font-bold tracking-wider uppercase shadow-sm flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]"></span>
+                Question {questionNumber} / 3
+              </span>
+            </div>
+
             {/* Speaking Indicator */}
             <AnimatePresence>
               {isSpeaking && (
@@ -186,7 +193,7 @@ export const Interview = () => {
           </div>
 
           {/* Question Text */}
-          <motion.div 
+          <motion.div
             key={questionNumber}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
