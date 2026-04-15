@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from '../contexts/RouterContext';
 import { InterviewCard } from '../components/dashboard/InterviewCard';
 import { Code, Brain, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ActiveSessionBanner from '../components/dashboard/ActiveSessionBanner';
 
 export const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
@@ -81,6 +82,35 @@ export const Dashboard = () => {
   const handleGuestCardClick = (nicheLabel) => {
     navigate('/login?redirect=/dashboard');
   };
+
+  const [activeSession, setActiveSession] = useState(null);
+
+  useEffect(() => {
+    const checkSession = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/interview/activeSession", {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      const data = await res.json();
+      console.log("active session response:", data); // ← add this
+      if (data.activeSession) setActiveSession(data);
+    } catch (err) {
+      console.error("active session check failed:", err); // ← and this
+    }
+  };
+  checkSession();
+  }, []);
+
+  const handleResume = () => {
+    // navigate to interview page with sessionId
+    navigate(`/interview/${activeSession.sessionId}`);
+  };
+
+  const handleDiscard = async () => {
+    // call your finish/abandon endpoint, then clear state
+    setActiveSession(null);
+  };
+
 
   const handleStartInterview = async (levelNumber, selectedStacks, trackType) => {
     try {
@@ -201,6 +231,14 @@ export const Dashboard = () => {
             Configure your interview parameters to begin the session.
           </p>
         </motion.div>
+
+        {activeSession && (
+          <ActiveSessionBanner
+            session={activeSession}
+            onResume={handleResume}
+            onDiscard={handleDiscard}
+          />
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}

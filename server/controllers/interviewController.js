@@ -288,4 +288,24 @@ const getInterviewHistory = asyncHandler(async (req, res) => {
   res.json(history);
 });
 
-export { startInterview, submitAnswer, finishInterview, getInterviewHistory };
+const getActiveSession = asyncHandler(async(req, res)=>{
+  const activeSession = await InterviewSession.findOne({
+    user: req.user._id,
+    status: 'in-progress'
+  })
+  if(!activeSession){
+    return res.json({activeSession: false})
+  }
+  const currentQs = activeSession.questions[activeSession.questions.length-1];
+
+  res.json({
+    activeSession: true,
+    sessionId: activeSession._id,
+    trackType: activeSession.trackType,
+    level: activeSession.level,
+    questionNumber: activeSession.questions.length,
+    currentQuestion: currentQs?.question,
+  })
+})
+
+export { startInterview, submitAnswer, finishInterview, getInterviewHistory, getActiveSession};
