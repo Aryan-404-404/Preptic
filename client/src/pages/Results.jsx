@@ -6,12 +6,45 @@ import { CheckCircle2, XCircle, ChevronRight, BarChart2, Star, Award } from 'luc
 export const Results = () => {
   const { navigate } = useRouter();
   const [results, setResults] = useState(null);
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     const data = sessionStorage.getItem('interviewResults');
     if (data) setResults(JSON.parse(data));
     else navigate('/dashboard');
   }, [navigate]);
+
+  const handleNextLevel = async () => {
+    try {
+      setIsStarting(true);
+      const response = await fetch('http://localhost:5000/api/interview/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          trackType: results.trackType,
+          level: results.level + 1,
+          techStack: results.techStack
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to start next level');
+
+      sessionStorage.setItem('currentInterviewData', JSON.stringify({
+        question: data.question,
+        questionNumber: data.questionNumber,
+        level: results.level + 1
+      }));
+
+      navigate(`/interview/${data.sessionId}`);
+    } catch (error) {
+      alert(error.message);
+      setIsStarting(false);
+    }
+  };
 
   if (!results) return null;
 
@@ -73,7 +106,7 @@ export const Results = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-12 flex justify-center"
+          className="mt-12 flex justify-center gap-6"
         >
           <button
             onClick={() => navigate('/dashboard')}
@@ -81,6 +114,17 @@ export const Results = () => {
           >
             Return to Dashboard <ChevronRight className="w-5 h-5" />
           </button>
+          
+          {results.passed && results.level < 3 && (
+            <button
+              onClick={handleNextLevel}
+              disabled={isStarting}
+              className="flex items-center gap-2 px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full font-bold shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all disabled:opacity-50"
+            >
+              {isStarting ? 'Loading...' : `Start Level ${results.level + 1}`} 
+              {!isStarting && <ChevronRight className="w-5 h-5" />}
+            </button>
+          )}
         </motion.div>
       </div>
     </div>

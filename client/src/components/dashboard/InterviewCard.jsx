@@ -3,15 +3,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, ChevronRight, Lock, X } from 'lucide-react';
 
 export const InterviewCard = ({ title, type, icon, stacks, bgColorClass, accentColorClass, isLocked = false, onCardClick = null, onStartInterview = null }) => {
-    const [selectedStacks, setSelectedStacks] = useState([]);
+    const [selectedStacks, setSelectedStacks] = useState(() => {
+        const saved = localStorage.getItem(`preptic_stacks_${title}`);
+        return saved ? JSON.parse(saved) : [];
+    });
     const [isExpanded, setIsExpanded] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
 
     useEffect(() => {
+        localStorage.setItem(`preptic_stacks_${title}`, JSON.stringify(selectedStacks));
         if (selectedStacks.length > 0 && !isLocked) setIsExpanded(true);
         else if (selectedStacks.length === 0) setIsExpanded(false);
-    }, [selectedStacks, isLocked]);
+    }, [selectedStacks, isLocked, title]);
 
     const levels = [
         { id: 'easy', label: 'Easy - Level', desc: 'Basic concepts & fundamentals', dot: 'bg-emerald-400', levelNumber: 1 },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Square, Loader2, Brain, AlertCircle, Volume2 } from 'lucide-react';
+import { Mic, Square, Loader2, Brain, AlertCircle, Volume2, Keyboard, Send } from 'lucide-react';
 import { useRouter } from '../contexts/RouterContext';
 
 export const Interview = () => {
@@ -14,6 +14,10 @@ export const Interview = () => {
   const [errorToast, setErrorToast] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+  // New States for Text Mode
+  const [inputMode, setInputMode] = useState('voice'); // 'voice' | 'text'
+  const [textAnswer, setTextAnswer] = useState('');
+
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
@@ -24,7 +28,7 @@ export const Interview = () => {
       const parsed = JSON.parse(data);
       setQuestion(parsed.question);
       setQuestionNumber(parsed.questionNumber);
-      if(parsed.level) setInterviewLevel(parsed.level);
+      if (parsed.level) setInterviewLevel(parsed.level);
     } else {
       setErrorToast("No active question found! Returning to dashboard.");
       setTimeout(() => navigate('/dashboard'), 3000);
@@ -84,7 +88,7 @@ export const Interview = () => {
         if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
 
-      mediaRecorder.onstop = submitAnswer;
+      mediaRecorder.onstop = () => processAnswerSubmit(true);
 
       mediaRecorder.start(250);
       setStatus('listening');
@@ -102,12 +106,32 @@ export const Interview = () => {
     }
   };
 
-  const submitAnswer = async () => {
-    const mimeType = mediaRecorderRef.current.mimeType || 'audio/webm';
-    const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+  const submitTextAnswer = () => {
+    if (!textAnswer.trim()) {
+      setErrorToast("Please type an answer before submitting.");
+      setTimeout(() => setErrorToast(null), 3000);
+      return;
+    }
+
+    // Stop speaking just in case it's still reading
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    setStatus('processing');
+    processAnswerSubmit(false);
+  };
+
+  // Shared submit logic for both voice and text
+  const processAnswerSubmit = async (isAudio) => {
     const formData = new FormData();
     formData.append('sessionId', sessionId);
-    formData.append('audio', audioBlob, 'answer.webm');
+
+    if (isAudio) {
+      const mimeType = mediaRecorderRef.current.mimeType || 'audio/webm';
+      const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+      formData.append('audio', audioBlob, 'answer.webm');
+    } else {
+      formData.append('answer', textAnswer);
+    }
 
     try {
       const response = await fetch('http://localhost:5000/api/interview/answer', {
@@ -127,6 +151,7 @@ export const Interview = () => {
       } else {
         setQuestion(data.nextQuestion);
         setQuestionNumber(data.questionNumber);
+        setTextAnswer(''); // Reset text field for next question
         setStatus('ready');
       }
     } catch (error) {
@@ -186,7 +211,7 @@ export const Interview = () => {
                   className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-full text-xs font-bold tracking-wider uppercase"
                 >
                   <Volume2 className="w-4 h-4 animate-pulse" />
-                  AI Interviewer Speaking
+                  AI Speaking
                 </motion.div>
               )}
             </AnimatePresence>
@@ -204,69 +229,139 @@ export const Interview = () => {
             </h2>
           </motion.div>
 
-          {/* Central Record Button Area */}
+          {/* Central Input Area */}
           <div className="relative flex flex-col items-center justify-center mt-auto w-full z-10">
-            <div className="relative flex justify-center items-center h-40 w-40 mb-6">
-              {/* Outer Ripple Effects for Listening */}
-              {status === 'listening' && (
-                <>
-                  <motion.div
-                    animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-                    transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
-                    className="absolute inset-0 bg-red-500/20 rounded-full"
-                  />
-                  <motion.div
-                    animate={{ scale: [1, 1.8, 1], opacity: [0.3, 0, 0.3] }}
-                    transition={{ repeat: Infinity, duration: 2.5, ease: "easeOut", delay: 0.2 }}
-                    className="absolute inset-0 bg-red-500/10 rounded-full"
-                  />
-                </>
-              )}
 
-              <motion.button
-                whileHover={status === 'ready' ? { scale: 1.05 } : {}}
-                whileTap={status === 'ready' ? { scale: 0.95 } : {}}
-                onClick={status === 'ready' ? startRecording : status === 'listening' ? stopRecording : undefined}
-                disabled={status === 'processing'}
-                className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-500 border-2
-                  ${status === 'ready' ? 'bg-gradient-to-tr from-gray-800 to-gray-700 border-gray-600 hover:border-gray-500 hover:shadow-gray-700/50' : ''}
-                  ${status === 'listening' ? 'bg-gradient-to-tr from-red-600 to-red-500 border-red-400 shadow-[0_0_30px_rgba(239,68,68,0.4)]' : ''}
-                  ${status === 'processing' ? 'bg-gradient-to-tr from-orange-600 to-orange-500 border-orange-400 shadow-[0_0_30px_rgba(249,115,22,0.4)] cursor-not-allowed opacity-90' : ''}
-                `}
-              >
-                {status === 'ready' && <Mic className="w-10 h-10 drop-shadow-md" />}
-                {status === 'listening' && <Square className="w-8 h-8 drop-shadow-md" fill="currentColor" />}
-                {status === 'processing' && <Loader2 className="w-10 h-10 animate-spin drop-shadow-md" />}
-              </motion.button>
-            </div>
-
-            {/* Status Text Area */}
-            <div className="h-8 flex justify-center">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={status}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex items-center gap-2 justify-center font-medium tracking-widest text-xs"
+            {/* Mode Toggle */}
+            {status !== 'listening' && status !== 'processing' && (
+              <div className="flex bg-gray-800/50 p-1 rounded-full border border-gray-700/50 mb-6 backdrop-blur-sm shadow-md">
+                <button
+                  onClick={() => setInputMode('voice')}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-all ${inputMode === 'voice' ? 'bg-gray-700 text-white shadow-md' : 'text-gray-400 hover:text-gray-200'
+                    }`}
                 >
-                  {status === 'ready' && <span className="text-gray-400 uppercase">Tap microphone to answer</span>}
-                  {status === 'listening' && (
+                  <Mic className="w-4 h-4" />
+                  Voice
+                </button>
+                <button
+                  onClick={() => setInputMode('text')}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-all ${inputMode === 'text' ? 'bg-gray-700 text-white shadow-md' : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                >
+                  <Keyboard className="w-4 h-4" />
+                  Text
+                </button>
+              </div>
+            )}
+
+            <AnimatePresence mode="wait">
+              {inputMode === 'voice' ? (
+                <motion.div
+                  key="voice-mode"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="flex flex-col items-center"
+                >
+                  <div className="relative flex justify-center items-center h-40 w-40 mb-6">
+                    {/* Outer Ripple Effects for Listening */}
+                    {status === 'listening' && (
+                      <>
+                        <motion.div
+                          animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                          transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
+                          className="absolute inset-0 bg-red-500/20 rounded-full"
+                        />
+                        <motion.div
+                          animate={{ scale: [1, 1.8, 1], opacity: [0.3, 0, 0.3] }}
+                          transition={{ repeat: Infinity, duration: 2.5, ease: "easeOut", delay: 0.2 }}
+                          className="absolute inset-0 bg-red-500/10 rounded-full"
+                        />
+                      </>
+                    )}
+
+                    <motion.button
+                      whileHover={status === 'ready' ? { scale: 1.05 } : {}}
+                      whileTap={status === 'ready' ? { scale: 0.95 } : {}}
+                      onClick={status === 'ready' ? startRecording : status === 'listening' ? stopRecording : undefined}
+                      disabled={status === 'processing'}
+                      className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-500 border-2
+                        ${status === 'ready' ? 'bg-gradient-to-tr from-gray-800 to-gray-700 border-gray-600 hover:border-gray-500 hover:shadow-gray-700/50' : ''}
+                        ${status === 'listening' ? 'bg-gradient-to-tr from-red-600 to-red-500 border-red-400 shadow-[0_0_30px_rgba(239,68,68,0.4)]' : ''}
+                        ${status === 'processing' ? 'bg-gradient-to-tr from-orange-600 to-orange-500 border-orange-400 shadow-[0_0_30px_rgba(249,115,22,0.4)] cursor-not-allowed opacity-90' : ''}
+                      `}
+                    >
+                      {status === 'ready' && <Mic className="w-10 h-10 drop-shadow-md" />}
+                      {status === 'listening' && <Square className="w-8 h-8 drop-shadow-md" fill="currentColor" />}
+                      {status === 'processing' && <Loader2 className="w-10 h-10 animate-spin drop-shadow-md" />}
+                    </motion.button>
+                  </div>
+
+                  {/* Status Text Area for Voice */}
+                  <div className="h-8 flex justify-center">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={status}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex items-center gap-2 justify-center font-medium tracking-widest text-xs"
+                      >
+                        {status === 'ready' && <span className="text-gray-400 uppercase">Tap microphone to answer</span>}
+                        {status === 'listening' && (
+                          <>
+                            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                            <span className="text-red-400 uppercase">Recording... Tap to conclude</span>
+                          </>
+                        )}
+                        {status === 'processing' && (
+                          <>
+                            <Brain className="w-4 h-4 text-orange-400" />
+                            <span className="text-orange-400 uppercase">AI is analyzing response...</span>
+                          </>
+                        )}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="text-mode"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  className="w-full flex flex-col items-center max-w-3xl"
+                >
+                  {status === 'processing' ? (
+                    <div className="h-[220px] flex items-center justify-center flex-col gap-4">
+                      <Loader2 className="w-10 h-10 animate-spin text-orange-400 drop-shadow-md" />
+                      <div className="flex items-center gap-2 font-medium tracking-widest text-xs">
+                        <Brain className="w-4 h-4 text-orange-400" />
+                        <span className="text-orange-400 uppercase">AI is analyzing response...</span>
+                      </div>
+                    </div>
+                  ) : (
                     <>
-                      <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
-                      <span className="text-red-400 uppercase">Recording... Tap to conclude</span>
-                    </>
-                  )}
-                  {status === 'processing' && (
-                    <>
-                      <Brain className="w-4 h-4 text-orange-400" />
-                      <span className="text-orange-400 uppercase">AI is analyzing response...</span>
+                      <textarea
+                        value={textAnswer}
+                        onChange={(e) => setTextAnswer(e.target.value)}
+                        placeholder="Type your answer here. Take your time to construct your thoughts..."
+                        className="w-full h-40 bg-gray-900/50 border border-gray-700/50 rounded-2xl p-5 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all resize-none backdrop-blur-sm text-lg leading-relaxed shadow-inner"
+                      />
+                      <button
+                        onClick={submitTextAnswer}
+                        disabled={!textAnswer.trim()}
+                        className="mt-6 flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-full shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_30px_rgba(249,115,22,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 active:translate-y-0"
+                      >
+                        <Send className="w-4 h-4" />
+                        Submit Answer
+                      </button>
                     </>
                   )}
                 </motion.div>
-              </AnimatePresence>
-            </div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       </div>

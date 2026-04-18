@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Github, Twitter, Linkedin } from 'lucide-react';
 import { useRouter } from '../contexts/RouterContext';
+import heroImage from '../assets/job_interview_Image/7566.jpg';
 
 export const Landing = () => {
     const { navigate } = useRouter();
@@ -36,28 +37,11 @@ export const Landing = () => {
                         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}
                         className="hidden lg:block relative"
                     >
-                        <div className="w-full h-125 bg-white rounded-2xl shadow-2xl shadow-gray-200 border border-gray-100 p-6 relative overflow-hidden">
-                            {/* Mockup UI representing the app */}
-                            <div className="flex gap-2 mb-6 border-b border-gray-100 pb-4">
-                                <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                                <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-                                <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="h-8 w-1/3 bg-gray-100 rounded-lg"></div>
-                                <div className="h-4 w-1/4 bg-gray-100 rounded-lg"></div>
-                                <div className="mt-8 grid grid-cols-2 gap-4">
-                                    <div className="h-32 bg-gray-50 rounded-xl border border-gray-100 p-4">
-                                        <div className="h-4 w-1/2 bg-gray-200 rounded mb-2"></div>
-                                        <div className="h-3 w-3/4 bg-gray-200 rounded"></div>
-                                    </div>
-                                    <div className="h-32 bg-gray-50 rounded-xl border border-gray-100 p-4">
-                                        <div className="h-4 w-1/2 bg-gray-200 rounded mb-2"></div>
-                                        <div className="h-3 w-3/4 bg-gray-200 rounded"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <img
+                            src={heroImage}
+                            alt="Interview Illustration"
+                            className="w-full h-auto object-contain drop-shadow-2xl hover:scale-[1.02] transition-transform duration-500 rounded-2xl"
+                        />
                     </motion.div>
                 </div>
             </div>
