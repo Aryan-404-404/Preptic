@@ -174,6 +174,9 @@ const submitAnswer = asyncHandler(async (req, res) => {
       done: true,
       finalScore: session.finalScore,
       passed: session.passed,
+      level: session.level,
+      trackType: session.trackType,
+      techStack: session.techStack,
       breakdown: session.questions.map((q) => ({
         question: q.question,
         score: q.score,
