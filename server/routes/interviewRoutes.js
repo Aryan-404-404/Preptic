@@ -1,5 +1,5 @@
 import express from "express";
-import { startInterview, submitAnswer, finishInterview, getInterviewHistory, getActiveSession } from "../controllers/interviewController.js";
+import { startInterview, submitAnswer, finishInterview, getInterviewHistory, getActiveSession, discardSession } from "../controllers/interviewController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { uploadAudio } from "../middleware/upload.js";
 
@@ -10,6 +10,7 @@ router.post("/answer", protect, uploadAudio.single("audio"), submitAnswer);
 router.post("/finish", protect, finishInterview);
 router.get("/history", protect, getInterviewHistory);
 router.get("/activeSession", protect, getActiveSession);
+router.delete("/discard", protect, discardSession);
 
 // in interviewRoutes.js - temporary
 router.post("/test-whisper", protect, uploadAudio.single("audio"), async (req, res) => {

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, Square, Loader2, Brain, AlertCircle, Volume2, Keyboard, Send } from 'lucide-react';
 import { useRouter } from '../contexts/RouterContext';
+import api from '../config/axios';
 
 export const Interview = () => {
   const { path, navigate } = useRouter();
@@ -134,16 +135,8 @@ export const Interview = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/interview/answer', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Failed to submit answer');
+      const response = await api.post('/api/interview/answer', formData);
+      const data = response.data;
 
       if (data.done) {
         sessionStorage.setItem('interviewResults', JSON.stringify(data));
@@ -151,11 +144,11 @@ export const Interview = () => {
       } else {
         setQuestion(data.nextQuestion);
         setQuestionNumber(data.questionNumber);
-        setTextAnswer(''); // Reset text field for next question
+        setTextAnswer('');
         setStatus('ready');
       }
     } catch (error) {
-      setErrorToast(error.message);
+      setErrorToast(error.response?.data?.message || error.message);
       setStatus('ready');
       setTimeout(() => setErrorToast(null), 5000);
     }
@@ -286,9 +279,9 @@ export const Interview = () => {
                       onClick={status === 'ready' ? startRecording : status === 'listening' ? stopRecording : undefined}
                       disabled={status === 'processing'}
                       className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-500 border-2
-                        ${status === 'ready' ? 'bg-gradient-to-tr from-gray-800 to-gray-700 border-gray-600 hover:border-gray-500 hover:shadow-gray-700/50' : ''}
-                        ${status === 'listening' ? 'bg-gradient-to-tr from-red-600 to-red-500 border-red-400 shadow-[0_0_30px_rgba(239,68,68,0.4)]' : ''}
-                        ${status === 'processing' ? 'bg-gradient-to-tr from-orange-600 to-orange-500 border-orange-400 shadow-[0_0_30px_rgba(249,115,22,0.4)] cursor-not-allowed opacity-90' : ''}
+                        ${status === 'ready' ? 'bg-linear-to-tr from-gray-800 to-gray-700 border-gray-600 hover:border-gray-500 hover:shadow-gray-700/50' : ''}
+                        ${status === 'listening' ? 'bg-linear-to-tr from-red-600 to-red-500 border-red-400 shadow-[0_0_30px_rgba(239,68,68,0.4)]' : ''}
+                        ${status === 'processing' ? 'bg-linear-to-tr from-orange-600 to-orange-500 border-orange-400 shadow-[0_0_30px_rgba(249,115,22,0.4)] cursor-not-allowed opacity-90' : ''}
                       `}
                     >
                       {status === 'ready' && <Mic className="w-10 h-10 drop-shadow-md" />}
