@@ -218,7 +218,7 @@ export const Dashboard = () => {
           className="mb-10"
         >
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
-            Welcome, {user?.name.split(' ')[0]}
+            Welcome, {user?.name?.split(' ')[0] || 'Guest'}
           </h1>
           <p className="text-gray-500">
             Configure your interview parameters to begin the session.
