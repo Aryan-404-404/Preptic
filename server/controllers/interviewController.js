@@ -311,4 +311,15 @@ const getActiveSession = asyncHandler(async(req, res)=>{
   })
 })
 
-export { startInterview, submitAnswer, finishInterview, getInterviewHistory, getActiveSession};
+const discardSession = asyncHandler(async (req, res) => {
+  const { sessionId } = req.body;
+  const session = await InterviewSession.findById(sessionId);
+
+  if (!session) { res.status(404); throw new Error("Session not found"); }
+  if (session.user.toString() !== req.user._id.toString()) { res.status(403); throw new Error("Not authorized"); }
+
+  await InterviewSession.findByIdAndDelete(sessionId);
+  res.json({ message: "Session discarded" });
+});
+
+export { startInterview, submitAnswer, finishInterview, getInterviewHistory, getActiveSession, discardSession};

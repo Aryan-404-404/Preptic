@@ -87,27 +87,38 @@ export const Dashboard = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/api/interview/activeSession", {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      const data = await res.json();
-      console.log("active session response:", data); // ← add this
-      if (data.activeSession) setActiveSession(data);
-    } catch (err) {
-      console.error("active session check failed:", err); // ← and this
-    }
-  };
-  checkSession();
+      try {
+        const res = await fetch("http://localhost:5000/api/interview/activeSession", {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+        const data = await res.json();
+        console.log("active session response:", data); // ← add this
+        if (data.activeSession) setActiveSession(data);
+      } catch (err) {
+        console.error("active session check failed:", err); // ← and this
+      }
+    };
+    checkSession();
   }, []);
 
   const handleResume = () => {
-    // navigate to interview page with sessionId
+    sessionStorage.setItem('currentInterviewData', JSON.stringify({
+      question: activeSession.currentQuestion,
+      questionNumber: activeSession.questionNumber,
+      level: activeSession.level,
+    }));
     navigate(`/interview/${activeSession.sessionId}`);
   };
 
   const handleDiscard = async () => {
-    // call your finish/abandon endpoint, then clear state
+    await fetch("http://localhost:5000/api/interview/discard", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({ sessionId: activeSession.sessionId }),
+    });
     setActiveSession(null);
   };
 

@@ -57,15 +57,14 @@ export async function generateQuestion({
   questionNumber = 1,
   previousQuestions = [],
 }) {
-  let systemRole = "You are a technical interviewer.";
+  let systemRole = "You are a senior technical interviewer at a top tech startup. You ask short, sharp, real-world questions.";
 
   if (trackType === "behavioral") {
-    systemRole = "You are an HR interviewer asking behavioral questions.";
+    systemRole = "You are an experienced HR interviewer at a top tech startup. You ask concise behavioral questions using STAR method scenarios.";
   }
 
   if (trackType === "combo") {
-    systemRole =
-      "You are an interviewer mixing technical and behavioral questions.";
+    systemRole = "You are a senior interviewer mixing short technical and behavioral questions relevant to the candidate's domain.";
   }
 
   const difficultyMap = { 1: "basic", 2: "intermediate", 3: "advanced" };
@@ -77,22 +76,38 @@ export async function generateQuestion({
   const avoidBlock =
     previousQuestions.length > 0
       ? `Do NOT repeat or rephrase any of these questions:\n${previousQuestions
-          .map((q, i) => `${i + 1}. ${q}`)
-          .join("\n")}`
+        .map((q, i) => `${i + 1}. ${q}`)
+        .join("\n")}`
       : "";
 
   const prompt = `
     Generate ONE interview question.
 
-    Domain: ${niche}
-    Tech Stack: ${techStack?.join(", ") || "General"}
-    Difficulty Level: ${difficultyLabel}
-    Interview Type: ${trackType}
-    Question Number: ${questionNumber} of 10 (make it ${questionProgressLabel})
+    Candidate Profile:
+    - Domain: ${niche}
+    - Tech Stack: ${techStack?.join(", ") || "General"}
+    - Interview Type: ${trackType}
+    - Difficulty: ${difficultyLabel}
+    - Question ${questionNumber} of 10 (progression: ${questionProgressLabel})
 
     ${avoidBlock}
 
-    Return ONLY the question text. No numbering, no labels, no extra text.
+    Strict Rules:
+    - Maximum 1 sentence, 2 sentences only if absolutely necessary
+    - Ask about ONE thing only — no compound or multi-part questions
+    - For technical: ask about a specific concept, tool, or real scenario they'd face on the job
+    - For behavioral: ask a single situation-based question ("Tell me about a time...", "How did you handle...")
+    - Sound like a real interviewer talking, not a textbook or exam paper
+    - Do NOT use phrases like "how would you implement", "what strategies would you employ", "considering factors such as"
+
+    Good examples:
+    - "What's the difference between useEffect and useLayoutEffect?"
+    - "How does CSS specificity work?"
+    - "Tell me about a time you had to debug a production issue under pressure."
+    - "How do you handle disagreements with teammates?"
+    - "What happens when you type a URL in the browser?"
+
+    Return ONLY the question. No numbering, no labels, no extra text.
   `;
 
   const response = await callGroq([
