@@ -153,7 +153,7 @@ const submitAnswer = asyncHandler(async (req, res) => {
     const avgScore = totalScore / answered.length;
 
     session.finalScore = parseFloat(avgScore.toFixed(2));
-    session.passed = avgScore >= 3;
+    session.passed = avgScore >= 6;
     session.status = "completed";
 
     await session.save();
@@ -251,7 +251,7 @@ const finishInterview = asyncHandler(async (req, res) => {
   const avgScore = totalScore / answered.length;
 
   session.finalScore = parseFloat(avgScore.toFixed(2));
-  session.passed = avgScore >= 3;
+  session.passed = avgScore >= 6;
   session.status = "completed";
 
   await session.save();
@@ -311,15 +311,4 @@ const getActiveSession = asyncHandler(async(req, res)=>{
   })
 })
 
-const discardSession = asyncHandler(async (req, res) => {
-  const { sessionId } = req.body;
-  const session = await InterviewSession.findById(sessionId);
-
-  if (!session) { res.status(404); throw new Error("Session not found"); }
-  if (session.user.toString() !== req.user._id.toString()) { res.status(403); throw new Error("Not authorized"); }
-
-  await InterviewSession.findByIdAndDelete(sessionId);
-  res.json({ message: "Session discarded" });
-});
-
-export { startInterview, submitAnswer, finishInterview, getInterviewHistory, getActiveSession, discardSession};
+export { startInterview, submitAnswer, finishInterview, getInterviewHistory, getActiveSession};

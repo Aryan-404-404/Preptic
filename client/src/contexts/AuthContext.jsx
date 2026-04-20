@@ -1,20 +1,32 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
-import api from '../config/axios';
 
 const AuthContext = createContext(null);
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Validate session and restore user from token on mount
   useEffect(() => {
     const validateSession = async () => {
       setIsLoading(true);
       try {
         const token = localStorage.getItem('token');
         if (token) {
-          const res = await api.get('/api/user/profile');
-          setUser(res.data);
+          const response = await fetch(`${API_BASE_URL}/user/profile`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+          } else {
+            localStorage.removeItem('token');
+          }
         }
       } catch (error) {
         console.error("Session validation failed", error);
@@ -28,15 +40,28 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const res = await api.post('/api/user/login', { email, password });
-      localStorage.setItem('token', res.data.token);
+      const response = await fetch(`${API_BASE_URL}/user/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Login failed');
+      }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
       setUser({
-        _id: res.data._id,
-        name: res.data.name,
-        email: res.data.email,
-        chosenNiche: res.data.chosenNiche,
-        techStack: res.data.techStack,
-        progress: res.data.progress,
+        _id: data._id,
+        name: data.name,
+        email: data.email,
+        chosenNiche: data.chosenNiche,
+        techStack: data.techStack,
+        progress: data.progress,
       });
     } catch (error) {
       console.error("Login error", error);
@@ -46,19 +71,32 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (data) => {
     try {
-      const res = await api.post('/api/user/register', {
-        name: data.name,
-        email: data.email,
-        password: data.password,
+      const response = await fetch(`${API_BASE_URL}/user/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+        }),
       });
-      localStorage.setItem('token', res.data.token);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Signup failed');
+      }
+
+      const userData = await response.json();
+      localStorage.setItem('token', userData.token);
       setUser({
-        _id: res.data._id,
-        name: res.data.name,
-        email: res.data.email,
-        chosenNiche: res.data.chosenNiche,
-        techStack: res.data.techStack,
-        progress: res.data.progress,
+        _id: userData._id,
+        name: userData.name,
+        email: userData.email,
+        chosenNiche: userData.chosenNiche,
+        techStack: userData.techStack,
+        progress: userData.progress,
       });
     } catch (error) {
       console.error("Signup error", error);
@@ -73,8 +111,23 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (updates) => {
     try {
-      const res = await api.put('/api/user/profile', updates);
-      setUser(res.data);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/user/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Update failed');
+      }
+
+      const updatedUser = await response.json();
+      setUser(updatedUser);
     } catch (error) {
       console.error("Update profile error", error);
       throw error;
