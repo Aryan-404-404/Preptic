@@ -88,8 +88,7 @@ export const Dashboard = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-<<<<<<< HEAD
-        const res = await fetch("http://localhost:5000/api/interview/activeSession", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/interview/activeSession`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         const data = await res.json();
@@ -97,41 +96,19 @@ export const Dashboard = () => {
         if (data.activeSession) setActiveSession(data);
       } catch (err) {
         console.error("active session check failed:", err); // ← and this
-=======
-        const res = await api.get("/api/interview/activeSession");
-        console.log("active session response:", res.data);
-        if (res.data.activeSession) setActiveSession(res.data);
-      } catch (err) {
-        console.error("active session check failed:", err);
->>>>>>> c76e6607fa95739a1817e22b3418504cc8e184e2
       }
     };
     checkSession();
   }, []);
 
-<<<<<<< HEAD
-  const handleResume = () => {
-    sessionStorage.setItem('currentInterviewData', JSON.stringify({
-      question: activeSession.currentQuestion,
-      questionNumber: activeSession.questionNumber,
-      level: activeSession.level,
-    }));
-    navigate(`/interview/${activeSession.sessionId}`);
-  };
-
   const handleDiscard = async () => {
-    await fetch("http://localhost:5000/api/interview/discard", {
+    await fetch(`${import.meta.env.VITE_API_URL}/api/interview/discard`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
       body: JSON.stringify({ sessionId: activeSession.sessionId }),
-=======
-  const handleDiscard = async () => {
-    await api.delete("/api/interview/discard", {
-      data: { sessionId: activeSession.sessionId },
->>>>>>> c76e6607fa95739a1817e22b3418504cc8e184e2
     });
     setActiveSession(null);
   };
@@ -147,13 +124,23 @@ export const Dashboard = () => {
 
   const handleStartInterview = async (levelNumber, selectedStacks, trackType) => {
     try {
-      const response = await api.post('/api/interview/start', {
-        trackType,
-        level: levelNumber,
-        techStack: selectedStacks
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/interview/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          trackType,
+          level: levelNumber,
+          techStack: selectedStacks
+        })
       });
 
-      const data = response.data;
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to start interview');
+      }
 
       sessionStorage.setItem('currentInterviewData', JSON.stringify({
         question: data.question,
@@ -163,7 +150,7 @@ export const Dashboard = () => {
 
       navigate(`/interview/${data.sessionId}`);
     } catch (error) {
-      alert(error.response?.data?.message || error.message);
+      alert(error.message);
     }
   };
 
