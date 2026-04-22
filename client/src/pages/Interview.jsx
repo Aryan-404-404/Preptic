@@ -134,7 +134,7 @@ export const Interview = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/interview/answer', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/interview/answer`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
