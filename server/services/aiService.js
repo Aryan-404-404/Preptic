@@ -92,20 +92,36 @@ export async function generateQuestion({
 
     ${avoidBlock}
 
+    Difficulty Guidelines:
+    - basic: fresher-level, definition or concept questions, things you'd find in a beginner tutorial
+    - intermediate: someone with 1-2 years experience, practical usage, common gotchas
+    - advanced: senior-level, architecture decisions, performance, edge cases
+
     Strict Rules:
     - Maximum 1 sentence, 2 sentences only if absolutely necessary
     - Ask about ONE thing only — no compound or multi-part questions
-    - For technical: ask about a specific concept, tool, or real scenario they'd face on the job
-    - For behavioral: ask a single situation-based question ("Tell me about a time...", "How did you handle...")
-    - Sound like a real interviewer talking, not a textbook or exam paper
-    - Do NOT use phrases like "how would you implement", "what strategies would you employ", "considering factors such as"
+    - For technical: ask about a specific concept, tool, or real scenario
+    - For behavioral: ask a single situation-based question
+    - Sound like a real interviewer, not a textbook
+    - Do NOT use "how would you implement", "what strategies would you employ", "considering factors such as"
+    - For basic difficulty, keep it genuinely simple — definitions, basic syntax, fundamental concepts only
 
-    Good examples:
+    Good examples for basic:
+    - "What is the difference between let, const and var?"
+    - "What is a REST API?"
+    - "What does useState do in React?"
+    - "What is the box model in CSS?"
+    - "Tell me about yourself and your experience so far."
+
+    Good examples for intermediate:
     - "What's the difference between useEffect and useLayoutEffect?"
     - "How does CSS specificity work?"
-    - "Tell me about a time you had to debug a production issue under pressure."
     - "How do you handle disagreements with teammates?"
+
+    Good examples for advanced:
     - "What happens when you type a URL in the browser?"
+    - "How would you optimize a slow React app?"
+    - "Tell me about a time you had to debug a production issue under pressure."
 
     Return ONLY the question. No numbering, no labels, no extra text.
   `;
@@ -124,7 +140,7 @@ export async function generateQuestion({
 */
 export async function evaluateAnswer({ question, answer }) {
   const prompt = `
-    Evaluate this interview answer.
+    Evaluate this interview answer fairly, like a supportive senior developer doing a mock interview.
 
     Question:
     ${question}
@@ -132,10 +148,24 @@ export async function evaluateAnswer({ question, answer }) {
     Answer:
     ${answer}
 
+    Scoring Guide:
+    - 8-10: Good answer, covers the main points, minor gaps are fine
+    - 6-7: Decent answer, gets the concept but missing some details
+    - 4-5: Partial answer, shows some understanding but significant gaps
+    - 2-3: Very weak, mostly wrong or off-topic
+    - 0-1: No answer or completely irrelevant
+
+    Rules:
+    - Be encouraging, not harsh
+    - If the candidate gets the core concept right, score generously (7+)
+    - Don't penalize for not mentioning every edge case
+    - Feedback should be 1-2 sentences max, mention what was good first then what was missing
+    - For behavioral questions, score based on structure and relevance not perfection
+
     Return JSON ONLY in this format, no extra text:
     {
       "score": number (0-10),
-      "feedback": "short feedback"
+      "feedback": "short encouraging feedback"
     }
   `;
 
