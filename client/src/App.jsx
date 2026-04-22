@@ -24,13 +24,13 @@ const AppContent = () => {
       case '/': return <PublicRoute><Landing /></PublicRoute>;
       case '/login': return <PublicRoute><Login /></PublicRoute>;
       case '/signup': return <PublicRoute><Signup /></PublicRoute>;
-      case '/dashboard': return <ProtectedRoute><Dashboard /></ProtectedRoute>;
+      case '/dashboard': return <Dashboard />;
       case '/profile': return <ProtectedRoute><Profile /></ProtectedRoute>;
     }
-    
+
     if (basePath.startsWith('/interview/')) return <ProtectedRoute><Interview /></ProtectedRoute>;
     if (basePath.startsWith('/results/')) return <ProtectedRoute><Results /></ProtectedRoute>;
-    
+
     return <Landing />;
   };
 

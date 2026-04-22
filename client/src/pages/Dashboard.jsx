@@ -87,50 +87,42 @@ export const Dashboard = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/api/interview/activeSession", {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      const data = await res.json();
-      console.log("active session response:", data); // ← add this
-      if (data.activeSession) setActiveSession(data);
-    } catch (err) {
-      console.error("active session check failed:", err); // ← and this
-    }
-  };
-  checkSession();
+      try {
+        const res = await api.get("/api/interview/activeSession");
+        console.log("active session response:", res.data);
+        if (res.data.activeSession) setActiveSession(res.data);
+      } catch (err) {
+        console.error("active session check failed:", err);
+      }
+    };
+    checkSession();
   }, []);
 
-  const handleResume = () => {
-    // navigate to interview page with sessionId
-    navigate(`/interview/${activeSession.sessionId}`);
-  };
-
   const handleDiscard = async () => {
-    // call your finish/abandon endpoint, then clear state
+    await api.delete("/api/interview/discard", {
+      data: { sessionId: activeSession.sessionId },
+    });
     setActiveSession(null);
   };
 
+  const handleResume = () => {
+    sessionStorage.setItem('currentInterviewData', JSON.stringify({
+      question: activeSession.currentQuestion,
+      questionNumber: activeSession.questionNumber,
+      level: activeSession.level,
+    }));
+    navigate(`/interview/${activeSession.sessionId}`);
+  };
 
   const handleStartInterview = async (levelNumber, selectedStacks, trackType) => {
     try {
-      const response = await fetch('http://localhost:5000/api/interview/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          trackType,
-          level: levelNumber,
-          techStack: selectedStacks
-        })
+      const response = await api.post('/api/interview/start', {
+        trackType,
+        level: levelNumber,
+        techStack: selectedStacks
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to start interview');
-      }
+      const data = response.data;
 
       sessionStorage.setItem('currentInterviewData', JSON.stringify({
         question: data.question,
@@ -140,7 +132,7 @@ export const Dashboard = () => {
 
       navigate(`/interview/${data.sessionId}`);
     } catch (error) {
-      alert(error.message);
+      alert(error.response?.data?.message || error.message);
     }
   };
 
@@ -225,7 +217,7 @@ export const Dashboard = () => {
           className="mb-10"
         >
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
-            Welcome, {user?.name?.split(' ')[0] || 'Guest'}
+            Welcome, {user?.name?.split(' ')[0]}
           </h1>
           <p className="text-gray-500">
             Configure your interview parameters to begin the session.
