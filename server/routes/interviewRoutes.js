@@ -12,10 +12,4 @@ router.get("/history", protect, getInterviewHistory);
 router.get("/activeSession", protect, getActiveSession);
 router.delete("/discard", protect, discardSession);
 
-// in interviewRoutes.js - temporary
-router.post("/test-whisper", protect, uploadAudio.single("audio"), async (req, res) => {
-  console.log("FILE RECEIVED:", req.file);
-  res.json({ received: !!req.file, mimetype: req.file?.mimetype });
-});
-
 export default router;
